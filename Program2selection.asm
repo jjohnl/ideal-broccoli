@@ -22,7 +22,7 @@ POSRES	STR	R2,R0,#0	; Swap "small" and "current" locations
 	STR	R3,R0,#1
 	ADD	R0,R0,#1	; Increment "Small"   location by 1 so new small is next ARR value
 	ADD	R1,R1,#1	; Increment "current" location by 1
-	ADD	R4,R4,#-1
+	ADD	R4,R4,#-1	; Decrement "counter" value by 1
 	BR	SORT
 
 
