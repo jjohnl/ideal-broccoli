@@ -14,18 +14,16 @@
 	
 LBi1	ADD	R1, R1, #-1
 	BRz	Done
-	ADD	R0, R0, R0
+Loop	ADD	R0, R0, R0
 	BRn	LBi1
 	BRp	LBi0
 
 LBi0	ADD	R1, R1, #-1
 	BRz	Done
 	ADD	R2, R2, #1
-	ADD	R0, R0, #0
-	BRn	LBi1
-	BRp	LBi0
+	BR	Loop
 	
-
+Done	BR	don
 Zero	AND	R0, R0, R0
 	ST	R0, Null
 	BR	don
