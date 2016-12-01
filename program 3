@@ -1,0 +1,113 @@
+; Programming Assignment 3
+; Student Name: John Nguyen Le
+; UT Eid: JNL865
+; Linked List Traversal, Insertion and search
+; You are given a linked list of student records with the 
+; address of the head of the list stored at x3500
+; The list is sorted by descending order of scores
+; Each student record has three fields in this order:
+;      Score -  A value between 0 and 100
+;      Next  -  Address of the next record in the ordered list
+;      Name  -  A null-terminated string
+; The Next field of the last student in the list is a 0
+; You are to perform two tasks:
+; Task 1: You are given a record stored at x4500 which you have to insert into the
+;         linked list of records at the correct position
+; Task 2: You are given a lookup name (string) at location x5500, You have to lookup this student 
+;         in the linked list (post Task1) and put the student's rank at x54FF (i.e., in front of the name)
+;         If the student is not in the list then the student rank 0 must be written at x54FF.
+
+;task 1
+	.ORIG	x3000
+	
+	LD	R0, OList	; R0 <--- Address of Address of Head (Behind)
+	LDI	R1, OList	; R1 <--- Address of Head	(Ahead)
+	LD	R2, iRec	; R2 <--- iRec Address		(iRec)
+
+Loop	LDR	R3, R1, #0	; R3 <--- Score of (Ahead)
+	LDR	R4, R2, #0	; R4 <--- Score of (iRec)
+	
+	NOT	R5, R4		; Subtracting iRec score from current (ahead) Score
+	ADD	R5, R5, #1
+	ADD	R5, R5, R3
+	BRp	iRecLT		; if iRec < we're not at right spot yet
+	BRnz	iRecGT		; if iRec >= we're at right spot
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; IF iREC SCORE < THAN SCORE AHEAD
+
+iRecLT	LD	R6, Neg0	; checks if we are at beginning of list
+	ADD	R6, R6, R0
+	BRnp	Skip1
+
+	LDR	R0, R0, #0	; if so, increment (behind) address from head to next node
+	LDR	R1, R1, #1	; increment (ahead) to next node
+	BR	Loop		; loop back and check again
+
+Skip1	LDR	R0, R0, #1	; same thing above, just not for head of list
+	LDR	R1, R1, #1
+	BR	Loop
+	
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;	IF iREC >= THAN SCORE AHEAD
+
+iRecGT	LD	R6, Neg0	; checking if we are at head of list
+	ADD	R6, R6, R0	
+	BRnp	Skip2
+
+	LD	R6, OList	; if so, we insert iRec at beginning of LL
+	STR	R2, R6, #0
+	STR	R1, R2, #1
+	BR	DONEINS
+
+Skip2	STR	R2, R0, #1	; if not, we insert it in middle of LL
+	STR	R1, R2, #1
+	BR	DONEINS
+	
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; cool, we're done inserting (hopefully correctly)
+; time for task 2
+
+DONEINS	AND	R0, R0, #0	; clears R0
+	LDI	R1, OList	; R1 <--- head (current) address
+	LDI	R6, OList	; Node Pointer
+	LD	R2, lookup	; R2 <--- lookup address
+Check	ADD	R1, R1, #0	; just in case we've reached end of list
+	BRz	NoRank		; if we have reached end with no match, rank = 0
+	LDR	R3, R1, #2	; R3 <--- ListString[idx]
+	LDR	R4, R2, #0	; R4 <--- LookUpString[idx]
+	BRz	EndQ
+
+	NOT	R5, R4		; this block compares current character
+	ADD	R5, R5, #1
+	ADD	R5, R5, R3
+	BRz	Nextch
+	BRnp	NxtNod
+
+Nextch	ADD	R1, R1, #1	; if characters matched, we increment index by 1
+	ADD	R2, R2, #1	; that way we can compare next characters in strings
+	BR	Check
+
+NxtNod	LDR 	R1, R6, #1	; if characters did not match, strings are not the same
+	ADD	R0, R0, #1	; we move onto the next node
+	LDR	R6, R6, #1
+	LD	R2, lookup
+	BR	Check
+	
+EndQ	ADD	R3, R3, #0	; checking if we have reached sentinels in both strings
+	BRz	Match		; if we have, we're done checking strings
+	BRnp	NxtNod		; if we have not, strings must be different and move to NxtNod
+
+Match	ADD	R0, R0, #1
+	STI	R0, storeR
+	BR	DNRNK
+
+NoRank	AND	R0, R0, #0
+	STI	R0, storeR
+
+DNRNK	TRAP	x25
+
+OList	.FILL	x3500	; Address of the head of the list is stored at x3500
+iRec	.FILL	x4500	; Record to insert is stored at x4500
+lookup	.FILL	x5500	; Name to lookup is stored at x5500
+storeR	.FILL	x54FF	; Address to store rank once complete
+Neg0	.FILL	x-3500	; i hate programming
+	.END
+
